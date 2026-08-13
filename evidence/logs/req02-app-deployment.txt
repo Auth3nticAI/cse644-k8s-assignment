@@ -1,0 +1,62 @@
+===================================================================
+ Req 2: App deployment + internal service discovery
+ Captured: 2026-08-13 16:13:16 UTC
+===================================================================
+
+--- [1] Multiple running instances of the web app -------------------
+NAME                         READY   STATUS    RESTARTS   AGE   IP           NODE            NOMINATED NODE   READINESS GATES
+nginx-web-6c7bb4d54c-88w9s   1/1     Running   0          53s   10.244.1.5   cse644-worker   <none>           <none>
+nginx-web-6c7bb4d54c-s8pcp   1/1     Running   0          53s   10.244.1.4   cse644-worker   <none>           <none>
+nginx-web-6c7bb4d54c-zk4c5   1/1     Running   0          53s   10.244.1.3   cse644-worker   <none>           <none>
+[PASS] nginx-web has 3 ready replicas (>=2, i.e. multiple instances)
+
+--- [2] Port-8888 app is running and responding ----------------------
+NAME                         READY   STATUS    RESTARTS   AGE   IP           NODE            NOMINATED NODE   READINESS GATES
+python-web-9ddbf9689-whdk5   1/1     Running   0          53s   10.244.1.6   cse644-worker   <none>           <none>
+python-web-9ddbf9689-xlfzz   1/1     Running   0          53s   10.244.1.7   cse644-worker   <none>           <none>
+[PASS] python-web has 2 ready replica(s)
+
+--- [3] Labels and Service selection are configured correctly -------
+Deployment Pod-template labels:
+  nginx-web selector: {"app":"nginx-web"}
+  python-web selector: {"app":"python-web"}
+
+Service selectors:
+  nginx-web-svc selector: {"app":"nginx-web"}
+  python-web-svc selector: {"app":"python-web"}
+
+Endpoints actually resolved by each Service (proves selector => Pod IPs match):
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME             ENDPOINTS                                   AGE
+nginx-web-svc    10.244.1.3:80,10.244.1.4:80,10.244.1.5:80   54s
+python-web-svc   10.244.1.6:8888,10.244.1.7:8888             54s
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+[PASS] nginx-web-svc has 3 endpoint IPs (selector matches multiple Pods)
+
+--- [4] Internal service discovery: DNS name -> Service -> Pod ------
+Using the Requirement-1 busybox Pod as an internal client.
+
+$ nslookup nginx-web-svc.cse644.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	nginx-web-svc.cse644.svc.cluster.local
+Address: 10.96.27.232
+[PASS] Service DNS name resolves
+
+Three curls to nginx-web-svc - different X-CSE644-Served-By values
+below (different Pod hostnames) is the proof that the Service is
+load-balancing across multiple Pod instances, not hitting one Pod:
+  [1]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-88w9s
+  [2]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-s8pcp
+  [3]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-s8pcp
+  [4]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-s8pcp
+  [5]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-88w9s
+  [6]   X-CSE644-Served-By: nginx-web-6c7bb4d54c-zk4c5
+
+$ wget -qO- http://python-web-svc.cse644.svc.cluster.local:8888/api/info
+{"assignment":"02 - Kubernetes","course":"CSE644 Cloud Computing","data_dir":"/data","environment":"unset","greeting":"Hello from CSE644!","hostname":"python-web-9ddbf9689-whdk5","listening_port":8888,"notes_count":0,"pid":11,"python_version":"3.12.13","recent_notes":[],"requests_served":3,"secret_loaded":false,"server_time_utc":"2026-08-13 16:13:20 UTC","student":"Tray Branch","uptime_seconds":55.0}
+[PASS] python-web reachable via its Service DNS name on 8888
+
+=== Req 2 complete: both apps deployed, discoverable via Service DNS ===

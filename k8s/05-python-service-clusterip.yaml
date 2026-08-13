@@ -1,0 +1,17 @@
+# CSE644 Assignment 02, Requirement 2: internal service discovery for the
+# port-8888 application.
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-web-svc
+  namespace: cse644
+  labels:
+    app: python-web
+spec:
+  type: ClusterIP
+  selector:
+    app: python-web
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888

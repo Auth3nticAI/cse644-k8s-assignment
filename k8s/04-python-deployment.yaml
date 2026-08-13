@@ -1,0 +1,37 @@
+# CSE644 Assignment 02, Requirement 2: the port-8888 application.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-web
+  namespace: cse644
+  labels:
+    app: python-web
+    tier: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: python-web
+  template:
+    metadata:
+      labels:
+        app: python-web
+        tier: api
+    spec:
+      containers:
+        - name: python-web
+          image: auth3nticai/cse644-k8s-python:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8888
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          # Readiness (checking ConfigMap/Secret/volume readiness via /readyz)
+          # plus the ConfigMap/Secret/PVC wiring itself are added to THIS
+          # file later, as part of Requirements 5 and 6 - see git history
+          # and the README for the before/after evidence.

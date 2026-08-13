@@ -1,0 +1,19 @@
+# CSE644 Assignment 02, Requirement 2 + Requirement 4 (ClusterIP).
+# Internal-only Service: stable DNS name/VIP that load-balances across every
+# Ready nginx-web Pod. Selector must match the Deployment's Pod labels
+# exactly, or the Service has no Endpoints and silently serves nothing.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-web-svc
+  namespace: cse644
+  labels:
+    app: nginx-web
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

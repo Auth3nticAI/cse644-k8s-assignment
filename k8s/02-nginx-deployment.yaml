@@ -1,0 +1,36 @@
+# CSE644 Assignment 02, Requirement 2: web application, multiple instances.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-web
+  namespace: cse644
+  labels:
+    app: nginx-web
+    tier: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-web
+  template:
+    metadata:
+      labels:
+        app: nginx-web
+        tier: web
+    spec:
+      containers:
+        - name: nginx-web
+          # Locally built and loaded into KinD via `kind load docker-image`
+          # (see README) - never pulled from a registry, so pull policy must
+          # not be Always or the kubelet will try to fetch it remotely.
+          image: auth3nticai/cse644-k8s-nginx:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
