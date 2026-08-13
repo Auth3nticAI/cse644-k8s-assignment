@@ -1,0 +1,21 @@
+# CSE644 Assignment 02, Requirement 3: reach HAProxy itself internally
+# (a NodePort variant of this exact idea is demonstrated for the nginx-web
+# app directly in Requirement 4).
+apiVersion: v1
+kind: Service
+metadata:
+  name: haproxy-edge-svc
+  namespace: cse644
+  labels:
+    app: haproxy-edge
+spec:
+  type: ClusterIP
+  selector:
+    app: haproxy-edge
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: stats
+      port: 8404
+      targetPort: 8404

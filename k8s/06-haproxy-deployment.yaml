@@ -1,0 +1,38 @@
+# CSE644 Assignment 02, Requirement 3: HAProxy edge component.
+# Runs independently of nginx-web and reaches it only through
+# nginx-web-svc's DNS name (see apps/haproxy/haproxy.cfg) - never through an
+# individual Pod IP.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-edge
+  namespace: cse644
+  labels:
+    app: haproxy-edge
+    tier: edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haproxy-edge
+  template:
+    metadata:
+      labels:
+        app: haproxy-edge
+        tier: edge
+    spec:
+      containers:
+        - name: haproxy
+          image: auth3nticai/cse644-k8s-haproxy:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 8404
+              name: stats
+          livenessProbe:
+            httpGet:
+              path: /
+              port: stats
+            initialDelaySeconds: 5
+            periodSeconds: 10

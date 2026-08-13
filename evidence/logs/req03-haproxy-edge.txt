@@ -1,0 +1,54 @@
+===================================================================
+ Req 3: HAProxy edge component in front of nginx-web
+ Captured: 2026-08-13 16:15:08 UTC
+===================================================================
+
+--- [1] The backend line in haproxy.cfg targets a Service, not a Pod -
+61:    server nginx-web nginx-web-svc.cse644.svc.cluster.local:80 check inter 2s fall 2 rise 2 init-addr last,libc,none resolvers dns_resolver
+[PASS] backend target is the Service DNS name, not a Pod IP/name
+
+--- [2] HAProxy Pod is running, nginx-web-svc has multiple endpoints -
+NAME                            READY   STATUS    RESTARTS   AGE   IP           NODE            NOMINATED NODE   READINESS GATES
+haproxy-edge-69546c8b6f-lsllr   1/1     Running   0          25s   10.244.1.8   cse644-worker   <none>           <none>
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME            ENDPOINTS                                   AGE
+nginx-web-svc   10.244.1.3:80,10.244.1.4:80,10.244.1.5:80   2m44s
+
+--- [3] HAProxy's own view of the backend (via its runtime resolver) -
+(stats page HTML also served at :8404/ inside the cluster - see curl below)
+
+--- [4] SUCCESSFUL PROXIED REQUEST from inside the cluster ----------
+Using the Requirement-1 busybox Pod as the client, hitting HAProxy's
+Service (haproxy-edge-svc), which forwards to nginx-web-svc:
+
+[1] $ wget -qS -O- http://haproxy-edge-svc.cse644.svc.cluster.local/
+            Response carries a custom <code>X-CSE644-Served-By</code> header
+      HTTP/1.1 200 OK
+      x-cse644-served-by: nginx-web-6c7bb4d54c-s8pcp
+      x-cse644-proxy: haproxy
+      x-cse644-proxy-node: haproxy-edge-69546c8b6f-lsllr
+
+[2] $ wget -qS -O- http://haproxy-edge-svc.cse644.svc.cluster.local/
+            Response carries a custom <code>X-CSE644-Served-By</code> header
+      HTTP/1.1 200 OK
+      x-cse644-served-by: nginx-web-6c7bb4d54c-s8pcp
+      x-cse644-proxy: haproxy
+      x-cse644-proxy-node: haproxy-edge-69546c8b6f-lsllr
+
+[3] $ wget -qS -O- http://haproxy-edge-svc.cse644.svc.cluster.local/
+            Response carries a custom <code>X-CSE644-Served-By</code> header
+      HTTP/1.1 200 OK
+      x-cse644-served-by: nginx-web-6c7bb4d54c-88w9s
+      x-cse644-proxy: haproxy
+      x-cse644-proxy-node: haproxy-edge-69546c8b6f-lsllr
+
+[4] $ wget -qS -O- http://haproxy-edge-svc.cse644.svc.cluster.local/
+            Response carries a custom <code>X-CSE644-Served-By</code> header
+      HTTP/1.1 200 OK
+      x-cse644-served-by: nginx-web-6c7bb4d54c-88w9s
+      x-cse644-proxy: haproxy
+      x-cse644-proxy-node: haproxy-edge-69546c8b6f-lsllr
+
+[PASS] Request passed through HAProxy (X-CSE644-Proxy header) and reached an nginx-web Pod (Served-By header)
+
+=== Req 3 complete: HAProxy reaches nginx-web via Service discovery ===
