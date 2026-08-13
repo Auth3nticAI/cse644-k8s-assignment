@@ -7,5 +7,5 @@ metadata:
   name: python-web-config
   namespace: cse644
 data:
-  APP_GREETING: "Hello from CSE644 Assignment 02!"
-  APP_ENVIRONMENT: "kind-local"
+  APP_GREETING: "Welcome to the CSE644 Kubernetes grading environment!"
+  APP_ENVIRONMENT: "kind-grading"
