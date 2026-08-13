@@ -1,0 +1,17 @@
+# CSE644 Assignment 02, Requirement 5: Persistent Storage.
+# KinD ships a default StorageClass (standard, provisioner:
+# rancher.io/local-path) that dynamically provisions a hostPath-backed
+# volume on whichever node the claim is bound from - so no manual
+# PersistentVolume object is needed, just the claim.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: python-web-data
+  namespace: cse644
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 100Mi

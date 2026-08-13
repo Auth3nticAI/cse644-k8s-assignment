@@ -1,4 +1,5 @@
-# CSE644 Assignment 02, Requirement 2: the port-8888 application.
+# CSE644 Assignment 02, Requirement 2 (port-8888 app) + Requirement 5
+# (persistent storage) + Requirement 6 (ConfigMap/Secret/readiness).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +9,13 @@ metadata:
     app: python-web
     tier: api
 spec:
-  replicas: 2
+  # 1 replica, not the 3 used for nginx-web: the PVC below is ReadWriteOnce
+  # and backed by KinD's default local-path StorageClass, which provisions a
+  # hostPath directory on a single node. A second replica could only be
+  # scheduled on that same node, and Requirement 5 is specifically about one
+  # workload being replaced and its data surviving - not concurrent replicas
+  # sharing one local volume.
+  replicas: 1
   selector:
     matchLabels:
       app: python-web
@@ -25,13 +32,28 @@ spec:
           ports:
             - containerPort: 8888
               name: http
+          envFrom:
+            - configMapRef:
+                name: python-web-config
+            - secretRef:
+                name: python-web-secret
+          volumeMounts:
+            - name: data
+              mountPath: /data
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
             initialDelaySeconds: 3
             periodSeconds: 10
-          # Readiness (checking ConfigMap/Secret/volume readiness via /readyz)
-          # plus the ConfigMap/Secret/PVC wiring itself are added to THIS
-          # file later, as part of Requirements 5 and 6 - see git history
-          # and the README for the before/after evidence.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: python-web-data

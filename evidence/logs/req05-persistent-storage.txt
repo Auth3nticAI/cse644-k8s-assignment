@@ -1,0 +1,35 @@
+===================================================================
+ Req 5: Persistent storage - write, replace Pod, verify
+ Captured: 2026-08-13 16:30:21 UTC
+ Marker note for this run: persistence-proof-1786638621
+===================================================================
+
+--- [0] Storage resources in use --------------------------------------
+NAME              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+python-web-data   Bound    pvc-f05a9401-42fd-4e57-8050-ebc1935ceb65   100Mi      RWO            standard       <unset>                 95s
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                    STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-f05a9401-42fd-4e57-8050-ebc1935ceb65   100Mi      RWO            Delete           Bound    cse644/python-web-data   standard       <unset>                          91s
+
+--- [1] BEFORE: write a note through the running Pod (python-web-5f486f6bf5-2hz82) --
+$ curl -X POST .../api/notes -d '{"note": "persistence-proof-1786638621"}'
+{"notes":["2026-08-13 16:30:22 UTC | pod=python-web-5f486f6bf5-2hz82 | persistence-proof-1786638621"]}
+[PASS] note written through Pod python-web-5f486f6bf5-2hz82
+
+--- [1b] Where it actually landed: on the PVC-backed /data, not the --
+         Pod's own writable layer -------------------------------------
+2026-08-13 16:30:22 UTC | pod=python-web-5f486f6bf5-2hz82 | persistence-proof-1786638621
+
+--- [2] REPLACE the workload: delete the Pod outright -----------------
+$ kubectl delete pod python-web-5f486f6bf5-2hz82
+pod "python-web-5f486f6bf5-2hz82" deleted from cse644 namespace
+pod/python-web-5f486f6bf5-rj4h8 condition met
+
+New Pod name : python-web-5f486f6bf5-rj4h8
+[PASS] this is a genuinely different Pod (old: python-web-5f486f6bf5-2hz82, new: python-web-5f486f6bf5-rj4h8)
+
+--- [3] AFTER: read the notes back through the NEW Pod ----------------
+$ curl .../api/notes
+2026-08-13 16:30:22 UTC | pod=python-web-5f486f6bf5-2hz82 | persistence-proof-1786638621
+[PASS] data written by the OLD Pod is visible from the NEW Pod - PVC persisted it
+
+=== Req 5 complete: PVC data survived Pod deletion and replacement ===

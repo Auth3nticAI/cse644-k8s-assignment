@@ -1,0 +1,11 @@
+# CSE644 Assignment 02, Requirement 6: non-secret application configuration.
+# Changing these values and re-rolling the Deployment (no image rebuild)
+# changes the greeting/environment label shown on the page and in /api/info.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: python-web-config
+  namespace: cse644
+data:
+  APP_GREETING: "Hello from CSE644 Assignment 02!"
+  APP_ENVIRONMENT: "kind-local"
