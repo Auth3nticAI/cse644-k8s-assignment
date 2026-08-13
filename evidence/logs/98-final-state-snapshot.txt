@@ -1,0 +1,68 @@
+===================================================================
+ Final cluster state snapshot
+ Captured: 2026-08-13 16:40:43 UTC
+===================================================================
+
+--- kubectl get nodes -----------------------------------------------
+NAME                   STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                      CONTAINER-RUNTIME
+cse644-control-plane   Ready    control-plane   31m   v1.34.0   172.22.0.3    <none>        Debian GNU/Linux 12 (bookworm)   6.18.33.2-microsoft-standard-WSL2   containerd://2.1.3
+cse644-worker          Ready    <none>          31m   v1.34.0   172.22.0.2    <none>        Debian GNU/Linux 12 (bookworm)   6.18.33.2-microsoft-standard-WSL2   containerd://2.1.3
+
+--- kubectl get all -n cse644 ----------------------------------------
+NAME                                READY   STATUS    RESTARTS   AGE     IP            NODE            NOMINATED NODE   READINESS GATES
+pod/haproxy-edge-69546c8b6f-lsllr   1/1     Running   0          26m     10.244.1.8    cse644-worker   <none>           <none>
+pod/nginx-web-6c7bb4d54c-88w9s      1/1     Running   0          28m     10.244.1.5    cse644-worker   <none>           <none>
+pod/nginx-web-6c7bb4d54c-s8pcp      1/1     Running   0          28m     10.244.1.4    cse644-worker   <none>           <none>
+pod/nginx-web-6c7bb4d54c-zk4c5      1/1     Running   0          28m     10.244.1.3    cse644-worker   <none>           <none>
+pod/public-image-demo               1/1     Running   0          30m     10.244.1.2    cse644-worker   <none>           <none>
+pod/python-web-69b78b568-tqvzq      1/1     Running   0          6m48s   10.244.1.22   cse644-worker   <none>           <none>
+
+NAME                             TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)           AGE   SELECTOR
+service/haproxy-edge-svc         ClusterIP      10.96.117.254   <none>        80/TCP,8404/TCP   26m   app=haproxy-edge
+service/nginx-web-loadbalancer   LoadBalancer   10.96.38.175    172.22.0.4    8090:31037/TCP    22m   app=nginx-web
+service/nginx-web-nodeport       NodePort       10.96.21.203    <none>        80:30080/TCP      22m   app=nginx-web
+service/nginx-web-svc            ClusterIP      10.96.27.232    <none>        80/TCP            28m   app=nginx-web
+service/python-web-svc           ClusterIP      10.96.30.80     <none>        8888/TCP          28m   app=python-web
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                              SELECTOR
+deployment.apps/haproxy-edge   1/1     1            1           26m   haproxy      auth3nticai/cse644-k8s-haproxy:v1   app=haproxy-edge
+deployment.apps/nginx-web      3/3     3            3           28m   nginx-web    auth3nticai/cse644-k8s-nginx:v1     app=nginx-web
+deployment.apps/python-web     1/1     1            1           28m   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web
+
+NAME                                      DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                              SELECTOR
+replicaset.apps/haproxy-edge-69546c8b6f   1         1         1       26m     haproxy      auth3nticai/cse644-k8s-haproxy:v1   app=haproxy-edge,pod-template-hash=69546c8b6f
+replicaset.apps/nginx-web-6c7bb4d54c      3         3         3       28m     nginx-web    auth3nticai/cse644-k8s-nginx:v1     app=nginx-web,pod-template-hash=6c7bb4d54c
+replicaset.apps/python-web-564d4f68d4     0         0         0       8m50s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=564d4f68d4
+replicaset.apps/python-web-5ccbc7cf65     0         0         0       7m      python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=5ccbc7cf65
+replicaset.apps/python-web-5f486f6bf5     0         0         0       11m     python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=5f486f6bf5
+replicaset.apps/python-web-69b78b568      1         1         1       6m48s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=69b78b568
+replicaset.apps/python-web-6b954ddff9     0         0         0       8m32s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=6b954ddff9
+replicaset.apps/python-web-74cd698685     0         0         0       8m41s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=74cd698685
+replicaset.apps/python-web-74ddf854cb     0         0         0       7m10s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=74ddf854cb
+replicaset.apps/python-web-7b7bd6b64b     0         0         0       7m23s   python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=7b7bd6b64b
+replicaset.apps/python-web-9ddbf9689      0         0         0       28m     python-web   auth3nticai/cse644-k8s-python:v1    app=python-web,pod-template-hash=9ddbf9689
+
+--- kubectl get configmap,secret,pvc -n cse644 ------------------------
+NAME                          DATA   AGE
+configmap/kube-root-ca.crt    1      30m
+configmap/python-web-config   2      11m
+
+NAME                       TYPE     DATA   AGE
+secret/python-web-secret   Opaque   1      8m32s
+
+NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/python-web-data   Bound    pvc-f05a9401-42fd-4e57-8050-ebc1935ceb65   100Mi      RWO            standard       <unset>                 11m
+
+--- kubectl get ingress -n cse644 --------------------------------------
+NAME                CLASS   HOSTS          ADDRESS     PORTS   AGE
+nginx-web-ingress   nginx   cse644.local   localhost   80      22m
+
+--- kubectl get pods -n ingress-nginx ----------------------------------
+NAME                                      READY   STATUS    RESTARTS   AGE   IP           NODE                   NOMINATED NODE   READINESS GATES
+ingress-nginx-controller-f5784567-mp6s9   1/1     Running   0          23m   10.244.0.5   cse644-control-plane   <none>           <none>
+
+--- images loaded into the KinD cluster --------------------------------
+IMAGE                                           TAG                  IMAGE ID            SIZE
+docker.io/auth3nticai/cse644-k8s-haproxy        v1                   8f257e1d2c2a9       14.4MB
+docker.io/auth3nticai/cse644-k8s-nginx          v1                   6647d97c04e62       21MB
+docker.io/auth3nticai/cse644-k8s-python         v1                   755fc8416fc67       49.1MB
