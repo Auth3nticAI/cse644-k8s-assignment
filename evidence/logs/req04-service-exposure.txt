@@ -1,0 +1,80 @@
+===================================================================
+ Req 4: Service Exposure Comparison (ClusterIP/NodePort/LB/Ingress)
+ Captured: 2026-08-13 16:27:20 UTC
+===================================================================
+
+--- All four Service/Ingress objects, all selecting app=nginx-web ---
+NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+nginx-web-loadbalancer   LoadBalancer   10.96.38.175   172.22.0.4    8090:31037/TCP   9m14s   app=nginx-web
+nginx-web-nodeport       NodePort       10.96.21.203   <none>        80:30080/TCP     9m14s   app=nginx-web
+nginx-web-svc            ClusterIP      10.96.27.232   <none>        80/TCP           14m     app=nginx-web
+NAME                CLASS   HOSTS          ADDRESS     PORTS   AGE
+nginx-web-ingress   nginx   cse644.local   localhost   80      9m15s
+
+=== [1] ClusterIP - internal-only ====================================
+Who can reach it   : only clients inside the cluster (Pods), or an
+                     operator tunneling in with kubectl port-forward.
+Entry point        : the Service's ClusterIP (10.96.x.x), a virtual
+                     IP that only exists in the cluster's networking.
+Forwarded by       : kube-proxy (iptables/nftables rules on every
+                     node) rewrites the ClusterIP:port to a live
+                     Pod endpoint IP:port.
+
+Access test: kubectl port-forward (operator-local access, no
+cluster-network membership required):
+$ curl http://127.0.0.1:18080/ (tunneled to nginx-web-svc:80)
+HTTP 200
+[PASS] ClusterIP reachable via kubectl port-forward
+
+=== [2] NodePort - fixed port on every node ===========================
+Who can reach it   : anything that can reach any cluster node's IP on
+                     the high port (30080 here) - e.g. other hosts on
+                     the same LAN as the node, not just cluster-internal.
+Entry point        : port 30080 on EVERY node (kube-proxy opens it
+                     cluster-wide, regardless of which node runs the Pod).
+Forwarded by       : kube-proxy on whichever node received the
+                     connection, to a live Pod endpoint (possibly on
+                     a different node).
+Local access path  : KinD's extraPortMappings map host port 30080 ->
+                     the control-plane container's port 30080.
+
+$ curl http://localhost:30080/
+HTTP 200
+[PASS] NodePort reachable at localhost:30080
+
+=== [3] LoadBalancer - external IP from cloud-provider-kind ===========
+Who can reach it   : anything that can route to the assigned external
+                     IP - in a real cloud, the public internet; here,
+                     anything on the 'kind' Docker bridge network.
+Entry point        : the EXTERNAL-IP cloud-provider-kind assigned
+                     (an Envoy proxy container it runs for this Service).
+Forwarded by       : that Envoy container proxies to the Service's
+                     Pod endpoints - kube-proxy is not in this path.
+EXTERNAL-IP: 172.22.0.4
+
+NOTE: on Docker Desktop for Windows, the WSL2 distro's own network
+namespace has no route into the 'kind' custom bridge network (this
+is a Docker-Desktop-on-Windows networking limitation, not a
+Kubernetes one), so the access test below runs from a peer container
+already attached to that network (cse644-worker) rather than from
+the WSL2 shell directly:
+$ docker exec cse644-worker curl http://172.22.0.4:8090/
+HTTP 200
+[PASS] LoadBalancer EXTERNAL-IP reachable on the kind Docker network
+
+=== [4] Ingress - HTTP host/path routing ==============================
+Who can reach it   : anything that can reach the ingress controller's
+                     entry point and sends the right Host header.
+Entry point        : host ports 80/443, mapped by KinD's
+                     extraPortMappings straight to the ingress-nginx
+                     controller Pod (which runs with hostNetwork:true
+                     on the control-plane node).
+Forwarded by       : the ingress-nginx controller reads the Ingress
+                     object's host/path rules and proxies to
+                     nginx-web-svc's Pod endpoints directly.
+
+$ curl -H 'Host: cse644.local' http://localhost/
+HTTP 200
+[PASS] Ingress reachable at localhost with Host: cse644.local
+
+=== Req 4 complete: ClusterIP, NodePort, LoadBalancer, Ingress all verified ===

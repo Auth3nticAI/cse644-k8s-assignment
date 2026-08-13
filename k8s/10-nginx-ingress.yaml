@@ -1,0 +1,26 @@
+# CSE644 Assignment 02, Requirement 4 (Ingress).
+# Routes HTTP requests for host cse644.local, path / -> nginx-web-svc:80.
+# The ingress-nginx controller (k8s/vendor/ingress-nginx-kind-controller-v1.15.1.yaml)
+# runs with hostNetwork on the control-plane node, bound to the ports the
+# KinD cluster config maps to the host (80/443) - so this is reachable at
+# http://cse644.local/ once that hostname resolves to 127.0.0.1.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-web-ingress
+  namespace: cse644
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: cse644.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-web-svc
+                port:
+                  number: 80

@@ -1,0 +1,27 @@
+# CSE644 Assignment 02, Requirement 4 (LoadBalancer).
+# KinD has no cloud provider, so nothing satisfies a LoadBalancer Service by
+# default and its EXTERNAL-IP stays <pending> forever. cloud-provider-kind
+# (https://github.com/kubernetes-sigs/cloud-provider-kind) is the standard
+# local stand-in: it watches for LoadBalancer Services and runs a small
+# proxy container on the "kind" Docker network that gets a real IP and
+# forwards to the Service's Endpoints. See README for install/run steps.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-web-loadbalancer
+  namespace: cse644
+  labels:
+    app: nginx-web
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx-web
+  ports:
+    # Port 8090 (not 80): host port 80 is already claimed by the KinD
+    # extraPortMapping used for Ingress (see kind/kind-config.yaml), and
+    # cloud-provider-kind binds a host port matching this Service's port -
+    # 8080 was also unavailable (already used by an unrelated local
+    # container on this machine), so 8090 is what's actually free here.
+    - name: http
+      port: 8090
+      targetPort: 80
