@@ -1,0 +1,31 @@
+# CSE644 Assignment 02, Requirement 1: Kubernetes Workload Operations.
+# A Pod built straight from a public image (no Dockerfile of ours involved),
+# used to demonstrate: create/run, inspect, logs, and interactive exec.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cse644
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: public-image-demo
+  namespace: cse644
+  labels:
+    app: public-image-demo
+    purpose: workload-ops-demo
+spec:
+  containers:
+    - name: busybox
+      image: busybox:1.36.1
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "public-image-demo starting on $(hostname) at $(date -u)";
+          i=0;
+          while true; do
+            i=$((i+1));
+            echo "[$i] $(date -u '+%Y-%m-%d %H:%M:%S UTC') hello from busybox on $(hostname)";
+            sleep 5;
+          done
+  restartPolicy: Never
