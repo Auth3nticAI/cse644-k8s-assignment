@@ -1,0 +1,15 @@
+# Everything that lands inside a Linux container must use LF line endings.
+# CRLF breaks haproxy.cfg parsing and produces "bad interpreter: /bin/sh^M" in scripts.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.cfg  text eol=lf
+*.conf text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+
+# Evidence screenshots are binary and must not be line-ending converted.
+*.png binary
+*.jpg binary

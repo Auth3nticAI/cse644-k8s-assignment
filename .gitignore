@@ -1,0 +1,28 @@
+# --- Credentials: assignment forbids committing any of these ---
+# NOTE: deliberately NOT a blanket "*secret*" glob - k8s/*-secret.yaml manifests
+# (Opaque Secret with a dummy value) are meant to be tracked for this assignment.
+# scripts/secret-scan.sh checks committed content for real-looking credential
+# patterns instead of relying on filename matching.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+kubeconfig*
+*.kubeconfig
+.docker/
+credentials
+
+# --- OS / editor noise ---
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# --- Python ---
+__pycache__/
+*.pyc
+venv/
+.venv/

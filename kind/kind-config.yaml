@@ -1,0 +1,36 @@
+# CSE644 Cloud Computing - Assignment 02
+# KinD cluster: one control-plane node + one worker node, so "multiple
+# running instances" of the web app can genuinely land on different nodes,
+# not just different Pods on the same node.
+#
+# extraPortMappings on the control-plane node map host ports to container
+# ports on that node, which is how a KinD cluster (itself just Docker
+# containers) becomes reachable from the Windows/WSL host at all:
+#   80/443  -> the NGINX Ingress controller (Requirement 4: Ingress)
+#   30080   -> a fixed NodePort used by the nginx-web NodePort Service
+#              (Requirement 4: NodePort)
+# LoadBalancer Services (Requirement 4) are handled separately by
+# cloud-provider-kind, which assigns a real routable IP on the kind Docker
+# network rather than needing a host port mapping here.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cse644
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+  - role: worker
