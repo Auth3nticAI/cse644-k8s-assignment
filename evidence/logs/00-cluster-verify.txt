@@ -1,0 +1,38 @@
+=== Environment: KinD cluster verification ===
+Thu Aug 13 16:09:25 UTC 2026
+
+$ kubectl config current-context
+kind-cse644
+
+$ kubectl cluster-info
+Kubernetes control plane is running at https://127.0.0.1:40257
+CoreDNS is running at https://127.0.0.1:40257/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+$ kubectl get nodes -o wide
+NAME                   STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                      CONTAINER-RUNTIME
+cse644-control-plane   Ready    control-plane   35s   v1.34.0   172.22.0.3    <none>        Debian GNU/Linux 12 (bookworm)   6.18.33.2-microsoft-standard-WSL2   containerd://2.1.3
+cse644-worker          Ready    <none>          25s   v1.34.0   172.22.0.2    <none>        Debian GNU/Linux 12 (bookworm)   6.18.33.2-microsoft-standard-WSL2   containerd://2.1.3
+
+$ kubectl get pods -A
+NAMESPACE            NAME                                           READY   STATUS    RESTARTS   AGE
+kube-system          coredns-66bc5c9577-2m9sg                       1/1     Running   0          25s
+kube-system          coredns-66bc5c9577-bwkzf                       1/1     Running   0          25s
+kube-system          etcd-cse644-control-plane                      1/1     Running   0          33s
+kube-system          kindnet-p5rpr                                  1/1     Running   0          26s
+kube-system          kindnet-pd9kk                                  1/1     Running   0          25s
+kube-system          kube-apiserver-cse644-control-plane            1/1     Running   0          32s
+kube-system          kube-controller-manager-cse644-control-plane   1/1     Running   0          32s
+kube-system          kube-proxy-g8p7s                               1/1     Running   0          26s
+kube-system          kube-proxy-zzg4h                               1/1     Running   0          25s
+kube-system          kube-scheduler-cse644-control-plane            1/1     Running   0          32s
+local-path-storage   local-path-provisioner-7b8c8ddbd6-t9bp4        1/1     Running   0          25s
+
+$ kubectl version
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
+Server Version: v1.34.0
+
+$ kind version
+kind v0.30.0 go1.24.6 linux/amd64
